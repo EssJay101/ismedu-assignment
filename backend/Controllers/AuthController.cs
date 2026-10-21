@@ -25,7 +25,11 @@ public class AuthController : ControllerBase
 
         if (result is null)
         {
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Unauthorized(new ErrorResponse
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Message = "Invalid email or password."
+            });
         }
 
         return Ok(result);
