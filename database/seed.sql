@@ -78,3 +78,6 @@ VALUES
         2,
         '7 FC Road, Shivajinagar, Pune'
     );
+
+INSERT INTO Users (UserId, FullName, Email, PasswordHash, IsActive) VALUES
+(1, 'ISMEDU Admin', 'admin@ismedu.com', '$2a$11$shgNnVVoic8wNSxXEIN.1.VmQ1jYpTvwDglETEiQArfiymDisoEhG', TRUE);
