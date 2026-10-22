@@ -42,7 +42,7 @@ public class StateRepository : IStateRepository
         var itemsSql = @"
             SELECT s.StateId, s.StateName, s.CountryId, s.IsActive, c.CountryName
             " + fromAndWhere + @"
-            ORDER BY c.CountryName, s.StateName
+            ORDER BY s.StateId
             LIMIT @PageSize OFFSET @Offset;";
 
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();

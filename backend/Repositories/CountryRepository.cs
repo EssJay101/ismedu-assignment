@@ -40,7 +40,7 @@ public class CountryRepository : ICountryRepository
         var itemsSql = @"
             SELECT CountryId, CountryName, CountryCode, IsActive
             FROM Countries " + where + @"
-            ORDER BY CountryName
+            ORDER BY CountryId
             LIMIT @PageSize OFFSET @Offset;";
 
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();

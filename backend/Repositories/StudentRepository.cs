@@ -51,7 +51,7 @@ public class StudentRepository : IStudentRepository
         var countSql = "SELECT COUNT(*) FROM Students st " + where + ";";
 
         var itemsSql = SelectWithNames + " " + where + @"
-            ORDER BY st.LastName, st.FirstName, st.StudentId
+            ORDER BY st.StudentId
             LIMIT @PageSize OFFSET @Offset;";
 
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();

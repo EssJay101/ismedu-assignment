@@ -46,7 +46,7 @@ public class CityRepository : ICityRepository
             SELECT ci.CityId, ci.CityName, ci.StateId, ci.IsActive,
                    s.StateName, s.CountryId, c.CountryName
             " + fromAndWhere + @"
-            ORDER BY c.CountryName, s.StateName, ci.CityName
+            ORDER BY ci.CityId
             LIMIT @PageSize OFFSET @Offset;";
 
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
