@@ -1,0 +1,17 @@
+.form-alert {
+  margin-bottom: 20px;
+}
+
+.load-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+select:disabled {
+  background: #F0F0EE;
+  color: var(--muted);
+  cursor: not-allowed;
+}

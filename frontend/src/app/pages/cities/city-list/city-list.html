@@ -1,0 +1,125 @@
+@let r = result();
+
+<header class="page-header">
+  <div>
+    <h1>Cities</h1>
+    <p class="page-subtitle">
+      @if (r) { {{ r.totalCount }} {{ r.totalCount === 1 ? 'city' : 'cities' }} found }
+      @else { Loading… }
+    </p>
+  </div>
+  <a routerLink="/cities/new" class="btn btn-primary">+ Add city</a>
+</header>
+
+<div class="toolbar">
+  <label for="city-search" class="sr-only">Search cities</label>
+  <input
+    id="city-search"
+    type="search"
+    placeholder="Search by city, state or country"
+    autocomplete="off"
+    (input)="onSearch($event)"
+  />
+
+  <label for="city-country" class="sr-only">Filter by country</label>
+  <select id="city-country" (change)="onCountryFilter($event)">
+    <option value="">All countries</option>
+    @for (country of countries(); track country.countryId) {
+      <option [value]="country.countryId">{{ country.countryName }}</option>
+    }
+  </select>
+
+  <label for="city-state" class="sr-only">Filter by state</label>
+  <select id="city-state" [attr.disabled]="countryFilter() === null ? '' : null" (change)="onStateFilter($event)">
+    <option value="" [selected]="stateFilter() === null">
+      {{ countryFilter() === null ? 'Select a country first' : 'All states' }}
+    </option>
+    @for (state of states(); track state.stateId) {
+      <option [value]="state.stateId" [selected]="state.stateId === stateFilter()">{{ state.stateName }}</option>
+    }
+  </select>
+
+  <label for="city-status" class="sr-only">Filter by status</label>
+  <select id="city-status" (change)="onStatus($event)">
+    <option value="all">All statuses</option>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select>
+</div>
+
+@if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="reload()">Try again</button>
+  </div>
+} @else if (!r) {
+  <div class="state-message">Loading cities…</div>
+} @else if (r.items.length === 0) {
+  <div class="state-message">
+    @if (search() || countryFilter() || status() !== 'all') { No cities match your search. }
+    @else { No cities yet. Add the first one. }
+  </div>
+} @else {
+  <div class="table-card" [class.is-loading]="loading()">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">City</th>
+          <th scope="col">State</th>
+          <th scope="col">Country</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (city of r.items; track city.cityId) {
+          <tr>
+            <td data-label="ID">{{ city.cityId }}</td>
+            <td data-label="City"><strong>{{ city.cityName }}</strong></td>
+            <td data-label="State">{{ city.stateName }}</td>
+            <td data-label="Country">{{ city.countryName }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.badge-active]="city.isActive" [class.badge-inactive]="!city.isActive">
+                {{ city.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <a
+                class="btn btn-sm"
+                [routerLink]="['/cities', city.cityId, 'edit']"
+                [attr.aria-label]="'Edit ' + city.cityName"
+              >Edit</a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger-outline"
+                [attr.aria-label]="'Delete ' + city.cityName"
+                (click)="askDelete(city)"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [page]="r.page"
+    [pageSize]="r.pageSize"
+    [totalCount]="r.totalCount"
+    [totalPages]="r.totalPages"
+    (pageChange)="goToPage($event)"
+    (pageSizeChange)="changePageSize($event)"
+  />
+}
+
+@if (toDelete(); as city) {
+  <app-confirm-dialog
+    [title]="'Delete ' + city.cityName + '?'"
+    message="This cannot be undone."
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

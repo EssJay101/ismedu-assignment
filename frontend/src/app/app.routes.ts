@@ -7,6 +7,8 @@ import { CountryList } from './pages/countries/country-list/country-list';
 import { CountryForm } from './pages/countries/country-form/country-form';
 import { StateList } from './pages/states/state-list/state-list';
 import { StateForm } from './pages/states/state-form/state-form';
+import { CityList } from './pages/cities/city-list/city-list';
+import { CityForm } from './pages/cities/city-form/city-form';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard], title: 'Sign in | ISMEDU' },
@@ -23,6 +25,9 @@ export const routes: Routes = [
       { path: 'states', component: StateList, title: 'States | ISMEDU' },
       { path: 'states/new', component: StateForm, title: 'Add state | ISMEDU' },
       { path: 'states/:id/edit', component: StateForm, title: 'Edit state | ISMEDU' },
+      { path: 'cities', component: CityList, title: 'Cities | ISMEDU' },
+      { path: 'cities/new', component: CityForm, title: 'Add city | ISMEDU' },
+      { path: 'cities/:id/edit', component: CityForm, title: 'Edit city | ISMEDU' },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
