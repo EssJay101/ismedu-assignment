@@ -1,0 +1,52 @@
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 18px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.size select {
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--card);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-info {
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .pagination {
+    justify-content: center;
+  }
+
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .controls .btn {
+    height: 44px;
+  }
+}

@@ -1,0 +1,27 @@
+<div class="overlay">
+  <div
+    class="dialog"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-title"
+    aria-describedby="confirm-message"
+  >
+    <h2 id="confirm-title">{{ title() }}</h2>
+    <p id="confirm-message">{{ message() }}</p>
+
+    @if (error()) {
+      <div class="alert-error" role="alert">{{ error() }}</div>
+    }
+
+    <div class="actions">
+      <button #cancelButton type="button" class="btn" [disabled]="busy()" (click)="cancelled.emit()">
+        {{ error() ? 'Close' : 'Cancel' }}
+      </button>
+      @if (!error()) {
+        <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="confirmed.emit()">
+          {{ busy() ? 'Deleting…' : confirmLabel() }}
+        </button>
+      }
+    </div>
+  </div>
+</div>
