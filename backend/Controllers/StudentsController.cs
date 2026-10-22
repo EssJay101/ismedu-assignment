@@ -8,6 +8,8 @@ namespace Ismedu.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService _service;
@@ -18,6 +20,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<StudentResponse>>> GetAll([FromQuery] StudentQuery query)
     {
         var result = await _service.GetPagedAsync(query);
@@ -25,6 +28,8 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StudentResponse>> GetById(int id)
     {
         var student = await _service.GetByIdAsync(id);
@@ -32,6 +37,8 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StudentResponse>> Create([FromBody] StudentRequest request)
     {
         var created = await _service.CreateAsync(request);
@@ -39,6 +46,9 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StudentResponse>> Update(int id, [FromBody] StudentRequest request)
     {
         var updated = await _service.UpdateAsync(id, request);
@@ -46,6 +56,8 @@ public class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         await _service.DeleteAsync(id);

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Text;
 using Ismedu.Api.Data;
+using Ismedu.Api.DTOs;
 using Ismedu.Api.Middleware;
 using Ismedu.Api.Repositories;
 using Ismedu.Api.Services;
@@ -39,6 +41,46 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+
+                string message;
+                if (context.AuthenticateFailure is SecurityTokenExpiredException)
+                {
+                    message = "Your session has expired. Please log in again.";
+                }
+                else if (context.AuthenticateFailure is not null)
+                {
+                    message = "Your login token is not valid. Please log in again.";
+                }
+                else
+                {
+                    message = "You are not logged in. Please log in to continue.";
+                }
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new ErrorResponse
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Message = message,
+                    TraceId = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier
+                });
+            },
+
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(new ErrorResponse
+                {
+                    Status = StatusCodes.Status403Forbidden,
+                    Message = "You do not have permission to do this.",
+                    TraceId = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier
+                });
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
