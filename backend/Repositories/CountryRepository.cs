@@ -15,6 +15,7 @@ public interface ICountryRepository
     Task<bool> UpdateAsync(Country country);
     Task<bool> DeleteAsync(int id);
     Task<(int StateCount, int StudentCount)> GetUsageAsync(int id);
+    Task<IEnumerable<Country>> GetActiveAsync();
 }
 
 public class CountryRepository : ICountryRepository
@@ -141,5 +142,17 @@ public class CountryRepository : ICountryRepository
         var studentCount = await connection.ExecuteScalarAsync<int>(studentSql, new { Id = id });
 
         return (stateCount, studentCount);
+    }
+
+     public async Task<IEnumerable<Country>> GetActiveAsync()
+    {
+        const string sql = @"
+            SELECT CountryId, CountryName
+            FROM Countries
+            WHERE IsActive = TRUE
+            ORDER BY CountryName;";
+
+        using var connection = _db.CreateConnection();
+        return await connection.QueryAsync<Country>(sql);
     }
 }

@@ -12,6 +12,7 @@ public interface ICountryService
     Task<CountryResponse> CreateAsync(CountryRequest request);
     Task<CountryResponse> UpdateAsync(int id, CountryRequest request);
     Task DeleteAsync(int id);
+    Task<IEnumerable<CountryOption>> GetOptionsAsync();
 }
 
 public class CountryService : ICountryService
@@ -81,8 +82,18 @@ public class CountryService : ICountryService
 
         await _countries.DeleteAsync(id);
     }
+    
+    public async Task<IEnumerable<CountryOption>> GetOptionsAsync()
+    {
+        var countries = await _countries.GetActiveAsync();
 
-    // ---------- helpers ----------
+        return countries
+            .Select(c => new CountryOption { CountryId = c.CountryId, CountryName = c.CountryName })
+            .ToList();
+    }
+
+
+    // Helpers
 
     private static Country Clean(CountryRequest request)
     {

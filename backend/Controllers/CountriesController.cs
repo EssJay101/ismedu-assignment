@@ -51,4 +51,11 @@ public class CountriesController : ControllerBase
         await _service.DeleteAsync(id);
         return NoContent();
     }
+
+    [HttpGet("options")]
+    public async Task<ActionResult<IEnumerable<CountryOption>>> GetOptions()
+    {
+        var options = await _service.GetOptionsAsync();
+        return Ok(options);
+    }
 }
