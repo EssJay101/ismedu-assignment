@@ -1,0 +1,126 @@
+@let r = result();
+
+<header class="page-header">
+  <div>
+    <h1>Students</h1>
+    <p class="page-subtitle">
+      @if (r) { {{ r.totalCount }} {{ r.totalCount === 1 ? 'student' : 'students' }} found }
+      @else { Loading… }
+    </p>
+  </div>
+  <a routerLink="/students/new" class="btn btn-primary">+ Register student</a>
+</header>
+
+<div class="toolbar">
+  <label for="student-search" class="sr-only">Search students</label>
+  <input
+    id="student-search"
+    type="search"
+    placeholder="Search by name, email or mobile"
+    autocomplete="off"
+    (input)="onSearch($event)"
+  />
+
+  <label for="student-country" class="sr-only">Filter by country</label>
+  <select id="student-country" (change)="onCountryFilter($event)">
+    <option value="">All countries</option>
+    @for (country of countries(); track country.countryId) {
+      <option [value]="country.countryId">{{ country.countryName }}</option>
+    }
+  </select>
+
+  <label for="student-state" class="sr-only">Filter by state</label>
+  <select id="student-state" [attr.disabled]="countryFilter() === null ? '' : null" (change)="onStateFilter($event)">
+    <option value="" [selected]="stateFilter() === null">
+      {{ countryFilter() === null ? 'Select a country first' : 'All states' }}
+    </option>
+    @for (state of states(); track state.stateId) {
+      <option [value]="state.stateId" [selected]="state.stateId === stateFilter()">{{ state.stateName }}</option>
+    }
+  </select>
+
+  <label for="student-city" class="sr-only">Filter by city</label>
+  <select id="student-city" [attr.disabled]="stateFilter() === null ? '' : null" (change)="onCityFilter($event)">
+    <option value="" [selected]="cityFilter() === null">
+      {{ stateFilter() === null ? 'Select a state first' : 'All cities' }}
+    </option>
+    @for (city of cities(); track city.cityId) {
+      <option [value]="city.cityId" [selected]="city.cityId === cityFilter()">{{ city.cityName }}</option>
+    }
+  </select>
+</div>
+
+@if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="reload()">Try again</button>
+  </div>
+} @else if (!r) {
+  <div class="state-message">Loading students…</div>
+} @else if (r.items.length === 0) {
+  <div class="state-message">
+    @if (search() || countryFilter()) { No students match your search. }
+    @else { No students yet. Register the first one. }
+  </div>
+} @else {
+  <div class="table-card" [class.is-loading]="loading()">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Name</th>
+          <th scope="col">Email</th>
+          <th scope="col">Mobile</th>
+          <th scope="col">Date of birth</th>
+          <th scope="col">Location</th>
+          <th scope="col" class="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (student of r.items; track student.studentId) {
+          <tr>
+            <td data-label="ID">{{ student.studentId }}</td>
+            <td data-label="Name"><strong>{{ student.firstName }} {{ student.lastName }}</strong></td>
+            <td data-label="Email" class="email">{{ student.email }}</td>
+            <td data-label="Mobile">{{ student.mobile }}</td>
+            <td data-label="Date of birth">{{ student.dateOfBirth | date: 'dd MMM yyyy' }}</td>
+            <td data-label="Location">{{ student.cityName }}, {{ student.stateName }}, {{ student.countryName }}</td>
+            <td class="actions">
+              <a
+                class="btn btn-sm"
+                [routerLink]="['/students', student.studentId, 'edit']"
+                [attr.aria-label]="'Edit ' + student.firstName + ' ' + student.lastName"
+              >Edit</a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger-outline"
+                [attr.aria-label]="'Delete ' + student.firstName + ' ' + student.lastName"
+                (click)="askDelete(student)"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [page]="r.page"
+    [pageSize]="r.pageSize"
+    [totalCount]="r.totalCount"
+    [totalPages]="r.totalPages"
+    (pageChange)="goToPage($event)"
+    (pageSizeChange)="changePageSize($event)"
+  />
+}
+
+@if (toDelete(); as student) {
+  <app-confirm-dialog
+    [title]="'Delete ' + student.firstName + ' ' + student.lastName + '?'"
+    message="This student's record will be removed. This cannot be undone."
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

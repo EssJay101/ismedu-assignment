@@ -1,0 +1,22 @@
+.load-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.is-loading {
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.email {
+  word-break: break-all;
+}
+
+select:disabled {
+  background: #F0F0EE;
+  color: var(--muted);
+  cursor: not-allowed;
+}

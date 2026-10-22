@@ -9,6 +9,8 @@ import { StateList } from './pages/states/state-list/state-list';
 import { StateForm } from './pages/states/state-form/state-form';
 import { CityList } from './pages/cities/city-list/city-list';
 import { CityForm } from './pages/cities/city-form/city-form';
+import { StudentList } from './pages/students/student-list/student-list';
+import { StudentForm } from './pages/students/student-form/student-form';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard], title: 'Sign in | ISMEDU' },
@@ -28,6 +30,9 @@ export const routes: Routes = [
       { path: 'cities', component: CityList, title: 'Cities | ISMEDU' },
       { path: 'cities/new', component: CityForm, title: 'Add city | ISMEDU' },
       { path: 'cities/:id/edit', component: CityForm, title: 'Edit city | ISMEDU' },
+      { path: 'students', component: StudentList, title: 'Students | ISMEDU' },
+      { path: 'students/new', component: StudentForm, title: 'Register student | ISMEDU' },
+      { path: 'students/:id/edit', component: StudentForm, title: 'Edit student | ISMEDU' },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

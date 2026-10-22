@@ -1,0 +1,212 @@
+<a routerLink="/students" class="back-link">‹ Back to students</a>
+
+<header class="page-header">
+  <h1>{{ isEdit ? 'Edit student' : 'Register student' }}</h1>
+</header>
+
+@if (notFound()) {
+  <div class="state-message">
+    This student was not found. They may have been deleted.
+    <a routerLink="/students">Back to the list</a>
+  </div>
+} @else if (loading()) {
+  <div class="state-message">Loading…</div>
+} @else if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="load()">Try again</button>
+  </div>
+} @else {
+  <form class="form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (formError()) {
+      <div class="alert-error form-alert" role="alert">{{ formError() }}</div>
+    }
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="firstName">First name *</label>
+        <input
+          id="firstName"
+          formControlName="firstName"
+          maxlength="50"
+          autocomplete="given-name"
+          [class.invalid]="!!errorFor('firstName')"
+          [attr.aria-invalid]="!!errorFor('firstName')"
+          aria-describedby="firstName-error"
+        />
+        @if (errorFor('firstName'); as message) {
+          <span id="firstName-error" class="field-error">{{ message }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="lastName">Last name *</label>
+        <input
+          id="lastName"
+          formControlName="lastName"
+          maxlength="50"
+          autocomplete="family-name"
+          [class.invalid]="!!errorFor('lastName')"
+          [attr.aria-invalid]="!!errorFor('lastName')"
+          aria-describedby="lastName-error"
+        />
+        @if (errorFor('lastName'); as message) {
+          <span id="lastName-error" class="field-error">{{ message }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="dateOfBirth">Date of birth *</label>
+        <input
+          id="dateOfBirth"
+          type="date"
+          formControlName="dateOfBirth"
+          min="1900-01-01"
+          [max]="maxDate"
+          [class.invalid]="!!errorFor('dateOfBirth')"
+          [attr.aria-invalid]="!!errorFor('dateOfBirth')"
+          aria-describedby="dateOfBirth-error"
+        />
+        @if (errorFor('dateOfBirth'); as message) {
+          <span id="dateOfBirth-error" class="field-error">{{ message }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="mobile">Mobile *</label>
+        <input
+          id="mobile"
+          type="tel"
+          inputmode="numeric"
+          formControlName="mobile"
+          maxlength="10"
+          autocomplete="tel-national"
+          [class.invalid]="!!errorFor('mobile')"
+          [attr.aria-invalid]="!!errorFor('mobile')"
+          aria-describedby="mobile-help"
+        />
+        @if (errorFor('mobile'); as message) {
+          <span id="mobile-help" class="field-error">{{ message }}</span>
+        } @else {
+          <span id="mobile-help" class="field-hint">10 digits, e.g. 9876543210</span>
+        }
+      </div>
+
+      <div class="field full">
+        <label for="email">Email *</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          maxlength="254"
+          autocomplete="email"
+          [class.invalid]="!!errorFor('email')"
+          [attr.aria-invalid]="!!errorFor('email')"
+          aria-describedby="email-error"
+        />
+        @if (errorFor('email'); as message) {
+          <span id="email-error" class="field-error">{{ message }}</span>
+        }
+      </div>
+
+      <div class="location full">
+        <div class="field">
+          <label for="countryId">Country *</label>
+          <select
+            id="countryId"
+            formControlName="countryId"
+            [class.invalid]="!!errorFor('countryId')"
+            [attr.aria-invalid]="!!errorFor('countryId')"
+            aria-describedby="countryId-error"
+          >
+            <option [ngValue]="null" disabled>Select a country</option>
+            @for (country of countries(); track country.countryId) {
+              <option [ngValue]="country.countryId">{{ country.countryName }}</option>
+            }
+          </select>
+          @if (errorFor('countryId'); as message) {
+            <span id="countryId-error" class="field-error">{{ message }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="stateId">State *</label>
+          <select
+            id="stateId"
+            formControlName="stateId"
+            [attr.disabled]="form.controls.countryId.value === null || loadingStates() ? '' : null"
+            [class.invalid]="!!errorFor('stateId')"
+            [attr.aria-invalid]="!!errorFor('stateId')"
+            aria-describedby="stateId-error"
+          >
+            <option [ngValue]="null" disabled>
+              @if (form.controls.countryId.value === null) { Select a country first }
+              @else if (loadingStates()) { Loading states… }
+              @else if (states().length === 0) { No active states }
+              @else { Select a state }
+            </option>
+            @for (state of states(); track state.stateId) {
+              <option [ngValue]="state.stateId">{{ state.stateName }}</option>
+            }
+          </select>
+          @if (errorFor('stateId'); as message) {
+            <span id="stateId-error" class="field-error">{{ message }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="cityId">City *</label>
+          <select
+            id="cityId"
+            formControlName="cityId"
+            [attr.disabled]="form.controls.stateId.value === null || loadingCities() ? '' : null"
+            [class.invalid]="!!errorFor('cityId')"
+            [attr.aria-invalid]="!!errorFor('cityId')"
+            aria-describedby="cityId-error"
+          >
+            <option [ngValue]="null" disabled>
+              @if (form.controls.stateId.value === null) { Select a state first }
+              @else if (loadingCities()) { Loading cities… }
+              @else if (cities().length === 0) { No active cities }
+              @else { Select a city }
+            </option>
+            @for (city of cities(); track city.cityId) {
+              <option [ngValue]="city.cityId">{{ city.cityName }}</option>
+            }
+          </select>
+          @if (errorFor('cityId'); as message) {
+            <span id="cityId-error" class="field-error">{{ message }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="field full">
+        <label for="address">Address *</label>
+        <textarea
+          id="address"
+          rows="3"
+          formControlName="address"
+          maxlength="250"
+          autocomplete="street-address"
+          [class.invalid]="!!errorFor('address')"
+          [attr.aria-invalid]="!!errorFor('address')"
+          aria-describedby="address-help"
+        ></textarea>
+        @if (errorFor('address'); as message) {
+          <span id="address-help" class="field-error">{{ message }}</span>
+        } @else {
+          <span id="address-help" class="field-hint">
+            10–250 characters ({{ form.controls.address.value.length }}/250)
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/students" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : isEdit ? 'Save changes' : 'Register student' }}
+      </button>
+    </div>
+  </form>
+}
