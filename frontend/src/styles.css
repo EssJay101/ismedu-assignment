@@ -89,6 +89,15 @@ a:hover {
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: #F0F0EE;
+  color: var(--ink);
 }
 
 .btn-primary {
@@ -99,6 +108,7 @@ a:hover {
 
 .btn-primary:hover {
   background: var(--brand-dark);
+  color: #FFFFFF;
 }
 
 .btn:disabled {

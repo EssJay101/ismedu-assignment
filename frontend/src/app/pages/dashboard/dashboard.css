@@ -1,13 +1,109 @@
-.placeholder {
-  max-width: 600px;
-  margin: 80px auto;
-  padding: 0 16px;
+.dashboard {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
+  gap: 28px;
 }
 
-.placeholder h1 {
+.intro h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+}
+
+.intro p {
   margin: 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  color: var(--ink);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-count {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-label {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.card-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.quick h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+.quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Tablet: 2 cards per row */
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Phone: smaller cards, one main button */
+@media (max-width: 600px) {
+  .intro h1 {
+    font-size: 24px;
+  }
+
+  .cards {
+    gap: 12px;
+  }
+
+  .card {
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .card-link {
+    display: none;
+  }
+
+  .card-count {
+    font-size: 30px;
+  }
+
+  .quick h2,
+  .quick-buttons .secondary {
+    display: none;
+  }
+
+  .quick-buttons .btn-primary {
+    width: 100%;
+  }
 }

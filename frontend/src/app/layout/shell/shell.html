@@ -1,0 +1,54 @@
+<div class="shell">
+  <header class="topbar">
+    <a routerLink="/dashboard" class="logo-pill">
+      <img src="ismedu-logo.svg" alt="ISMEDU Software Solutions" />
+    </a>
+    <button
+      type="button"
+      class="icon-btn"
+      aria-label="Open menu"
+      aria-controls="main-menu"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="openMenu()"
+    >
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="4" y1="17" x2="20" y2="17" />
+      </svg>
+    </button>
+  </header>
+
+  @if (menuOpen()) {
+    <button type="button" class="backdrop" aria-label="Close menu" (click)="closeMenu()"></button>
+  }
+
+  <aside id="main-menu" class="sidebar" [class.open]="menuOpen()">
+    <div class="sidebar-top">
+      <a routerLink="/dashboard" class="logo-pill" (click)="closeMenu()">
+        <img src="ismedu-logo.svg" alt="ISMEDU Software Solutions" />
+      </a>
+      <button type="button" class="icon-btn close-btn" aria-label="Close menu" (click)="closeMenu()">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18" />
+          <line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <nav aria-label="Main menu">
+      @for (item of menu; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" (click)="closeMenu()">{{ item.label }}</a>
+      }
+    </nav>
+
+    <div class="user">
+      <span class="user-name">{{ auth.currentUser()?.fullName }}</span>
+      <span class="user-email">{{ auth.currentUser()?.email }}</span>
+      <button type="button" class="logout" (click)="auth.logout()">Log out</button>
+    </div>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

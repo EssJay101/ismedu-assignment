@@ -1,5 +1,26 @@
-<div class="placeholder">
-  <h1>Welcome, {{ auth.currentUser()?.fullName }}</h1>
-  <p>You are logged in. The full dashboard comes in the next step.</p>
-  <button type="button" class="btn" (click)="auth.logout()">Log out</button>
-</div>
+<section class="dashboard">
+  <header class="intro">
+    <h1>Welcome back, {{ auth.currentUser()?.fullName }}</h1>
+    <p>Here is an overview of your records.</p>
+  </header>
+
+  <div class="cards">
+    @for (card of cards; track card.key) {
+      <a class="card" [routerLink]="card.link">
+        <span class="card-count">{{ countFor(card.key) }}</span>
+        <span class="card-label">{{ card.label }}</span>
+        <span class="card-link">View all ›</span>
+      </a>
+    }
+  </div>
+
+  <section class="quick">
+    <h2>Quick actions</h2>
+    <div class="quick-buttons">
+      <a routerLink="/students/new" class="btn btn-primary">+ Register student</a>
+      <a routerLink="/countries/new" class="btn secondary">+ Add country</a>
+      <a routerLink="/states/new" class="btn secondary">+ Add state</a>
+      <a routerLink="/cities/new" class="btn secondary">+ Add city</a>
+    </div>
+  </section>
+</section>
