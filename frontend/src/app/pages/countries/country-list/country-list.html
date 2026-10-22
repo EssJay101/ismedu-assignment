@@ -1,0 +1,105 @@
+@let r = result();
+
+<header class="page-header">
+  <div>
+    <h1>Countries</h1>
+    <p class="page-subtitle">
+      @if (r) { {{ r.totalCount }} {{ r.totalCount === 1 ? 'country' : 'countries' }} found }
+      @else { Loading… }
+    </p>
+  </div>
+  <a routerLink="/countries/new" class="btn btn-primary">+ Add country</a>
+</header>
+
+<div class="toolbar">
+  <label for="country-search" class="sr-only">Search countries</label>
+  <input
+    id="country-search"
+    type="search"
+    placeholder="Search by name or code"
+    autocomplete="off"
+    (input)="onSearch($event)"
+  />
+
+  <label for="country-status" class="sr-only">Filter by status</label>
+  <select id="country-status" (change)="onStatus($event)">
+    <option value="all">All statuses</option>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select>
+</div>
+
+@if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="reload()">Try again</button>
+  </div>
+} @else if (!r) {
+  <div class="state-message">Loading countries…</div>
+} @else if (r.items.length === 0) {
+  <div class="state-message">
+    @if (search() || status() !== 'all') { No countries match your search. }
+    @else { No countries yet. Add the first one. }
+  </div>
+} @else {
+  <div class="table-card" [class.is-loading]="loading()">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Country</th>
+          <th scope="col">Code</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (country of r.items; track country.countryId) {
+          <tr>
+            <td data-label="ID">{{ country.countryId }}</td>
+            <td data-label="Country"><strong>{{ country.countryName }}</strong></td>
+            <td data-label="Code">{{ country.countryCode || '—' }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.badge-active]="country.isActive" [class.badge-inactive]="!country.isActive">
+                {{ country.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <a
+                class="btn btn-sm"
+                [routerLink]="['/countries', country.countryId, 'edit']"
+                [attr.aria-label]="'Edit ' + country.countryName"
+              >Edit</a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger-outline"
+                [attr.aria-label]="'Delete ' + country.countryName"
+                (click)="askDelete(country)"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [page]="r.page"
+    [pageSize]="r.pageSize"
+    [totalCount]="r.totalCount"
+    [totalPages]="r.totalPages"
+    (pageChange)="goToPage($event)"
+    (pageSizeChange)="changePageSize($event)"
+  />
+}
+
+@if (toDelete(); as country) {
+  <app-confirm-dialog
+    [title]="'Delete ' + country.countryName + '?'"
+    message="This cannot be undone."
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
