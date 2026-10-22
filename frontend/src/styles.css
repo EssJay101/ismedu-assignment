@@ -1,1 +1,107 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --brand: #C8361C;
+  --brand-dark: #9E2A15;
+  --brand-light: #FF5A36;
+  --ink: #1C1C1C;
+  --muted: #5A5A5A;
+  --border: #CFCFCF;
+  --bg: #F5F5F3;
+  --card: #FFFFFF;
+  --sidebar: #0E0E0E;
+  --error: #B42318;
+  --error-bg: #FDECEA;
+  --success: #17663A;
+  --success-bg: #E3F6EA;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Fira Sans', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+a {
+  color: var(--brand);
+}
+
+a:hover {
+  color: var(--brand-dark);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 14px;
+  font-size: 16px;
+  font-family: inherit;
+  background: var(--card);
+}
+
+.field textarea {
+  height: auto;
+  padding: 12px 14px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.field .invalid {
+  border: 2px solid var(--error);
+}
+
+.field-error {
+  font-size: 13px;
+  color: var(--error);
+}
+
+.btn {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.btn-primary {
+  border: 0;
+  background: var(--brand);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background: var(--brand-dark);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

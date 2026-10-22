@@ -1,0 +1,5 @@
+<div class="placeholder">
+  <h1>Welcome, {{ auth.currentUser()?.fullName }}</h1>
+  <p>You are logged in. The full dashboard comes in the next step.</p>
+  <button type="button" class="btn" (click)="auth.logout()">Log out</button>
+</div>
