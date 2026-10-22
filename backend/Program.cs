@@ -19,7 +19,9 @@ builder.Services.AddControllers()
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
+builder.Services.AddScoped<IStateRepository, StateRepository>();
 builder.Services.AddScoped<ICountryService, CountryService>();
+builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
