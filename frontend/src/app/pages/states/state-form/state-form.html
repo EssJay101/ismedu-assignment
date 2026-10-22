@@ -1,0 +1,78 @@
+<a routerLink="/states" class="back-link">‹ Back to states</a>
+
+<header class="page-header">
+  <h1>{{ isEdit ? 'Edit state' : 'Add state' }}</h1>
+</header>
+
+@if (notFound()) {
+  <div class="state-message">
+    This state was not found. It may have been deleted.
+    <a routerLink="/states">Back to the list</a>
+  </div>
+} @else if (loading()) {
+  <div class="state-message">Loading…</div>
+} @else if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="load()">Try again</button>
+  </div>
+} @else {
+  <form class="form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (formError()) {
+      <div class="alert-error form-alert" role="alert">{{ formError() }}</div>
+    }
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="stateName">State name *</label>
+        <input
+          id="stateName"
+          formControlName="stateName"
+          maxlength="100"
+          autocomplete="off"
+          [class.invalid]="!!errorFor('stateName')"
+          [attr.aria-invalid]="!!errorFor('stateName')"
+          aria-describedby="stateName-error"
+        />
+        @if (errorFor('stateName'); as message) {
+          <span id="stateName-error" class="field-error">{{ message }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="countryId">Country *</label>
+        <select
+          id="countryId"
+          formControlName="countryId"
+          [class.invalid]="!!errorFor('countryId')"
+          [attr.aria-invalid]="!!errorFor('countryId')"
+          aria-describedby="countryId-help"
+        >
+          <option [ngValue]="null" disabled>Select a country</option>
+          @for (country of countries(); track country.countryId) {
+            <option [ngValue]="country.countryId">{{ country.countryName }}</option>
+          }
+        </select>
+        @if (errorFor('countryId'); as message) {
+          <span id="countryId-help" class="field-error">{{ message }}</span>
+        } @else if (isEdit) {
+          <span id="countryId-help" class="field-hint">
+            The country can only be changed while this state has no cities or students.
+          </span>
+        }
+      </div>
+
+      <label class="checkbox-field full">
+        <input type="checkbox" formControlName="isActive" />
+        Active (shown in dropdowns when registering students)
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/states" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : isEdit ? 'Save changes' : 'Add state' }}
+      </button>
+    </div>
+  </form>
+}

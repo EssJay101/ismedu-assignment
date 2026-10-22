@@ -1,0 +1,113 @@
+@let r = result();
+
+<header class="page-header">
+  <div>
+    <h1>States</h1>
+    <p class="page-subtitle">
+      @if (r) { {{ r.totalCount }} {{ r.totalCount === 1 ? 'state' : 'states' }} found }
+      @else { Loading… }
+    </p>
+  </div>
+  <a routerLink="/states/new" class="btn btn-primary">+ Add state</a>
+</header>
+
+<div class="toolbar">
+  <label for="state-search" class="sr-only">Search states</label>
+  <input
+    id="state-search"
+    type="search"
+    placeholder="Search by state or country"
+    autocomplete="off"
+    (input)="onSearch($event)"
+  />
+
+  <label for="state-country" class="sr-only">Filter by country</label>
+  <select id="state-country" (change)="onCountryFilter($event)">
+    <option value="">All countries</option>
+    @for (country of countries(); track country.countryId) {
+      <option [value]="country.countryId">{{ country.countryName }}</option>
+    }
+  </select>
+
+  <label for="state-status" class="sr-only">Filter by status</label>
+  <select id="state-status" (change)="onStatus($event)">
+    <option value="all">All statuses</option>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select>
+</div>
+
+@if (loadError()) {
+  <div class="alert-error load-error" role="alert">
+    <span>{{ loadError() }}</span>
+    <button type="button" class="btn btn-sm" (click)="reload()">Try again</button>
+  </div>
+} @else if (!r) {
+  <div class="state-message">Loading states…</div>
+} @else if (r.items.length === 0) {
+  <div class="state-message">
+    @if (search() || countryFilter() || status() !== 'all') { No states match your search. }
+    @else { No states yet. Add the first one. }
+  </div>
+} @else {
+  <div class="table-card" [class.is-loading]="loading()">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">State</th>
+          <th scope="col">Country</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (state of r.items; track state.stateId) {
+          <tr>
+            <td data-label="ID">{{ state.stateId }}</td>
+            <td data-label="State"><strong>{{ state.stateName }}</strong></td>
+            <td data-label="Country">{{ state.countryName }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.badge-active]="state.isActive" [class.badge-inactive]="!state.isActive">
+                {{ state.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <a
+                class="btn btn-sm"
+                [routerLink]="['/states', state.stateId, 'edit']"
+                [attr.aria-label]="'Edit ' + state.stateName"
+              >Edit</a>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger-outline"
+                [attr.aria-label]="'Delete ' + state.stateName"
+                (click)="askDelete(state)"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [page]="r.page"
+    [pageSize]="r.pageSize"
+    [totalCount]="r.totalCount"
+    [totalPages]="r.totalPages"
+    (pageChange)="goToPage($event)"
+    (pageSizeChange)="changePageSize($event)"
+  />
+}
+
+@if (toDelete(); as state) {
+  <app-confirm-dialog
+    [title]="'Delete ' + state.stateName + '?'"
+    message="This cannot be undone."
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
