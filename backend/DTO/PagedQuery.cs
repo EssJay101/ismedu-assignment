@@ -4,6 +4,7 @@ namespace Ismedu.Api.DTOs;
 
 public class PagedQuery
 {
+    [StringLength(100, ErrorMessage = "Search cannot be longer than 100 characters.")]
     public string? Search { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "Page must be 1 or more.")]

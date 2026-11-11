@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using Ismedu.Api.Data;
 using Ismedu.Api.Models;
@@ -20,13 +21,10 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        const string sql = @"
-            SELECT UserId, FullName, Email, PasswordHash, IsActive, CreatedAt
-            FROM Users
-            WHERE Email = @Email
-            LIMIT 1;";
-
         using var connection = _db.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
+        return await connection.QuerySingleOrDefaultAsync<User>(
+            "sp_User_GetByEmail",
+            new { p_Email = email },
+            commandType: CommandType.StoredProcedure);
     }
 }

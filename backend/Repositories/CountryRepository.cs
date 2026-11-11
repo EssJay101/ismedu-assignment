@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using Ismedu.Api.Data;
 using Ismedu.Api.DTOs;
@@ -29,130 +30,115 @@ public class CountryRepository : ICountryRepository
 
     public async Task<(IEnumerable<Country> Items, int TotalCount)> GetPagedAsync(CountryQuery query)
     {
-        const string where = @"
-            WHERE (@Search IS NULL
-                   OR CountryName LIKE @SearchPattern
-                   OR CountryCode LIKE @SearchPattern)
-              AND (@IsActive IS NULL OR IsActive = @IsActive)";
-
-        var countSql = "SELECT COUNT(*) FROM Countries " + where + ";";
-
-        var itemsSql = @"
-            SELECT CountryId, CountryName, CountryCode, IsActive
-            FROM Countries " + where + @"
-            ORDER BY CountryId
-            LIMIT @PageSize OFFSET @Offset;";
-
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
 
-        var parameters = new
-        {
-            Search = search,
-            SearchPattern = search is null ? null : $"%{search}%",
-            query.IsActive,
-            query.PageSize,
-            Offset = (query.Page - 1) * query.PageSize
-        };
-
         using var connection = _db.CreateConnection();
-        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
-        var items = await connection.QueryAsync<Country>(itemsSql, parameters);
+        using var results = await connection.QueryMultipleAsync(
+            "sp_Country_GetPaged",
+            new
+            {
+                p_Search = search,
+                p_IsActive = query.IsActive,
+                p_Page = query.Page,
+                p_PageSize = query.PageSize
+            },
+            commandType: CommandType.StoredProcedure);
+
+        var totalCount = await results.ReadSingleAsync<int>();
+        var items = (await results.ReadAsync<Country>()).ToList();
 
         return (items, totalCount);
     }
 
     public async Task<Country?> GetByIdAsync(int id)
     {
-        const string sql = @"
-            SELECT CountryId, CountryName, CountryCode, IsActive
-            FROM Countries
-            WHERE CountryId = @Id;";
-
         using var connection = _db.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<Country>(sql, new { Id = id });
+        return await connection.QuerySingleOrDefaultAsync<Country>(
+            "sp_Country_GetById",
+            new { p_CountryId = id },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> NameExistsAsync(string name, int? excludeId = null)
     {
-        const string sql = @"
-            SELECT EXISTS(
-                SELECT 1 FROM Countries
-                WHERE CountryName = @Name
-                  AND (@ExcludeId IS NULL OR CountryId <> @ExcludeId)
-            );";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<bool>(sql, new { Name = name, ExcludeId = excludeId });
+        return await connection.ExecuteScalarAsync<bool>(
+            "sp_Country_NameExists",
+            new { p_CountryName = name, p_ExcludeId = excludeId },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> CodeExistsAsync(string code, int? excludeId = null)
     {
-        const string sql = @"
-            SELECT EXISTS(
-                SELECT 1 FROM Countries
-                WHERE CountryCode = @Code
-                  AND (@ExcludeId IS NULL OR CountryId <> @ExcludeId)
-            );";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<bool>(sql, new { Code = code, ExcludeId = excludeId });
+        return await connection.ExecuteScalarAsync<bool>(
+            "sp_Country_CodeExists",
+            new { p_CountryCode = code, p_ExcludeId = excludeId },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<int> CreateAsync(Country country)
     {
-        const string sql = @"
-            INSERT INTO Countries (CountryName, CountryCode, IsActive)
-            VALUES (@CountryName, @CountryCode, @IsActive);
-            SELECT LAST_INSERT_ID();";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(sql, country);
+        return await connection.ExecuteScalarAsync<int>(
+            "sp_Country_Insert",
+            new
+            {
+                p_CountryName = country.CountryName,
+                p_CountryCode = country.CountryCode,
+                p_IsActive = country.IsActive
+            },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> UpdateAsync(Country country)
     {
-        const string sql = @"
-            UPDATE Countries
-            SET CountryName = @CountryName,
-                CountryCode = @CountryCode,
-                IsActive    = @IsActive
-            WHERE CountryId = @CountryId;";
-
         using var connection = _db.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql, country);
+        var rowsAffected = await connection.ExecuteScalarAsync<int>(
+            "sp_Country_Update",
+            new
+            {
+                p_CountryId = country.CountryId,
+                p_CountryName = country.CountryName,
+                p_CountryCode = country.CountryCode,
+                p_IsActive = country.IsActive
+            },
+            commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        const string sql = "DELETE FROM Countries WHERE CountryId = @Id;";
-
         using var connection = _db.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+        var rowsAffected = await connection.ExecuteScalarAsync<int>(
+            "sp_Country_Delete",
+            new { p_CountryId = id },
+            commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;
     }
 
     public async Task<(int StateCount, int StudentCount)> GetUsageAsync(int id)
     {
-        const string stateSql = "SELECT COUNT(*) FROM States WHERE CountryId = @Id;";
-        const string studentSql = "SELECT COUNT(*) FROM Students WHERE CountryId = @Id;";
-
         using var connection = _db.CreateConnection();
-        var stateCount = await connection.ExecuteScalarAsync<int>(stateSql, new { Id = id });
-        var studentCount = await connection.ExecuteScalarAsync<int>(studentSql, new { Id = id });
+        var usage = await connection.QuerySingleAsync<CountryUsage>(
+            "sp_Country_GetUsage",
+            new { p_CountryId = id },
+            commandType: CommandType.StoredProcedure);
 
-        return (stateCount, studentCount);
+        return (usage.StateCount, usage.StudentCount);
     }
 
-     public async Task<IEnumerable<Country>> GetActiveAsync()
+    public async Task<IEnumerable<Country>> GetActiveAsync()
     {
-        const string sql = @"
-            SELECT CountryId, CountryName
-            FROM Countries
-            WHERE IsActive = TRUE
-            ORDER BY CountryName;";
-
         using var connection = _db.CreateConnection();
-        return await connection.QueryAsync<Country>(sql);
+        return await connection.QueryAsync<Country>(
+            "sp_Country_GetActive",
+            commandType: CommandType.StoredProcedure);
+    }
+
+    private sealed class CountryUsage
+    {
+        public int StateCount { get; set; }
+        public int StudentCount { get; set; }
     }
 }
