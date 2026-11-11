@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using Ismedu.Api.Data;
 using Ismedu.Api.DTOs;
@@ -20,16 +21,6 @@ public class StudentRepository : IStudentRepository
 {
     private readonly IDbConnectionFactory _db;
 
-    private const string SelectWithNames = @"
-        SELECT st.StudentId, st.FirstName, st.LastName, st.DateOfBirth,
-               st.Email, st.Mobile, st.CountryId, st.StateId, st.CityId,
-               st.Address, st.CreatedAt, st.UpdatedAt,
-               c.CountryName, s.StateName, ci.CityName
-        FROM Students st
-        INNER JOIN Countries c ON c.CountryId = st.CountryId
-        INNER JOIN States s    ON s.StateId   = st.StateId
-        INNER JOIN Cities ci   ON ci.CityId   = st.CityId";
-
     public StudentRepository(IDbConnectionFactory db)
     {
         _db = db;
@@ -37,118 +28,104 @@ public class StudentRepository : IStudentRepository
 
     public async Task<(IEnumerable<Student> Items, int TotalCount)> GetPagedAsync(StudentQuery query)
     {
-        const string where = @"
-            WHERE (@Search IS NULL
-                   OR st.FirstName LIKE @SearchPattern
-                   OR st.LastName  LIKE @SearchPattern
-                   OR CONCAT(st.FirstName, ' ', st.LastName) LIKE @SearchPattern
-                   OR st.Email     LIKE @SearchPattern
-                   OR st.Mobile    LIKE @SearchPattern)
-              AND (@CountryId IS NULL OR st.CountryId = @CountryId)
-              AND (@StateId   IS NULL OR st.StateId   = @StateId)
-              AND (@CityId    IS NULL OR st.CityId    = @CityId)";
-
-        var countSql = "SELECT COUNT(*) FROM Students st " + where + ";";
-
-        var itemsSql = SelectWithNames + " " + where + @"
-            ORDER BY st.StudentId
-            LIMIT @PageSize OFFSET @Offset;";
-
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
 
-        var parameters = new
-        {
-            Search = search,
-            SearchPattern = search is null ? null : $"%{search}%",
-            query.CountryId,
-            query.StateId,
-            query.CityId,
-            query.PageSize,
-            Offset = (query.Page - 1) * query.PageSize
-        };
-
         using var connection = _db.CreateConnection();
-        var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
-        var items = await connection.QueryAsync<Student>(itemsSql, parameters);
+        using var results = await connection.QueryMultipleAsync(
+            "sp_Student_GetPaged",
+            new
+            {
+                p_Search = search,
+                p_CountryId = query.CountryId,
+                p_StateId = query.StateId,
+                p_CityId = query.CityId,
+                p_Page = query.Page,
+                p_PageSize = query.PageSize
+            },
+            commandType: CommandType.StoredProcedure);
+
+        var totalCount = await results.ReadSingleAsync<int>();
+        var items = (await results.ReadAsync<Student>()).ToList();
 
         return (items, totalCount);
     }
 
     public async Task<Student?> GetByIdAsync(int id)
     {
-        var sql = SelectWithNames + " WHERE st.StudentId = @Id;";
-
         using var connection = _db.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<Student>(sql, new { Id = id });
+        return await connection.QuerySingleOrDefaultAsync<Student>(
+            "sp_Student_GetById",
+            new { p_StudentId = id },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> EmailExistsAsync(string email, int? excludeId = null)
     {
-        const string sql = @"
-            SELECT EXISTS(
-                SELECT 1 FROM Students
-                WHERE Email = @Email
-                  AND (@ExcludeId IS NULL OR StudentId <> @ExcludeId)
-            );";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<bool>(sql, new { Email = email, ExcludeId = excludeId });
+        return await connection.ExecuteScalarAsync<bool>(
+            "sp_Student_EmailExists",
+            new { p_Email = email, p_ExcludeId = excludeId },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> MobileExistsAsync(string mobile, int? excludeId = null)
     {
-        const string sql = @"
-            SELECT EXISTS(
-                SELECT 1 FROM Students
-                WHERE Mobile = @Mobile
-                  AND (@ExcludeId IS NULL OR StudentId <> @ExcludeId)
-            );";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<bool>(sql, new { Mobile = mobile, ExcludeId = excludeId });
+        return await connection.ExecuteScalarAsync<bool>(
+            "sp_Student_MobileExists",
+            new { p_Mobile = mobile, p_ExcludeId = excludeId },
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<int> CreateAsync(Student student)
     {
-        const string sql = @"
-            INSERT INTO Students
-                (FirstName, LastName, DateOfBirth, Email, Mobile,
-                 CountryId, StateId, CityId, Address)
-            VALUES
-                (@FirstName, @LastName, @DateOfBirth, @Email, @Mobile,
-                 @CountryId, @StateId, @CityId, @Address);
-            SELECT LAST_INSERT_ID();";
-
         using var connection = _db.CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(sql, student);
+        return await connection.ExecuteScalarAsync<int>(
+            "sp_Student_Insert",
+            ToParameters(student, includeId: false),
+            commandType: CommandType.StoredProcedure);
     }
 
     public async Task<bool> UpdateAsync(Student student)
     {
-        const string sql = @"
-            UPDATE Students
-            SET FirstName   = @FirstName,
-                LastName    = @LastName,
-                DateOfBirth = @DateOfBirth,
-                Email       = @Email,
-                Mobile      = @Mobile,
-                CountryId   = @CountryId,
-                StateId     = @StateId,
-                CityId      = @CityId,
-                Address     = @Address
-            WHERE StudentId = @StudentId;";
-
         using var connection = _db.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql, student);
+        var rowsAffected = await connection.ExecuteScalarAsync<int>(
+            "sp_Student_Update",
+            ToParameters(student, includeId: true),
+            commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        const string sql = "DELETE FROM Students WHERE StudentId = @Id;";
-
         using var connection = _db.CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+        var rowsAffected = await connection.ExecuteScalarAsync<int>(
+            "sp_Student_Delete",
+            new { p_StudentId = id },
+            commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;
+    }
+
+    // Insert and Update send the same 9 values; Update also sends the ID
+    private static DynamicParameters ToParameters(Student student, bool includeId)
+    {
+        var parameters = new DynamicParameters();
+
+        if (includeId)
+        {
+            parameters.Add("p_StudentId", student.StudentId);
+        }
+
+        parameters.Add("p_FirstName", student.FirstName);
+        parameters.Add("p_LastName", student.LastName);
+        parameters.Add("p_DateOfBirth", student.DateOfBirth.Date, DbType.Date);
+        parameters.Add("p_Email", student.Email);
+        parameters.Add("p_Mobile", student.Mobile);
+        parameters.Add("p_CountryId", student.CountryId);
+        parameters.Add("p_StateId", student.StateId);
+        parameters.Add("p_CityId", student.CityId);
+        parameters.Add("p_Address", student.Address);
+
+        return parameters;
     }
 }

@@ -41,7 +41,8 @@ Install these first:
 Run the two scripts **in this order**:
 
 1. `database/schema.sql` — creates the `ismedu_db` database and its tables
-2. `database/seed.sql` — adds sample countries, states, cities, students and the login user
+2. `database/procedures.sql` — creates the stored procedures the API uses for every database operation
+3. `database/seed.sql` — adds sample countries, states, cities, students and the login user
 
 
 ### 2. Backend (API)
