@@ -36,6 +36,10 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
     ?? throw new InvalidOperationException("The 'Jwt' settings section is missing.");
 builder.Services.AddSingleton(jwtSettings);
 
+var encryptionSettings = builder.Configuration.GetSection("Encryption").Get<EncryptionSettings>()
+    ?? throw new InvalidOperationException("The 'Encryption' settings section is missing.");
+builder.Services.AddSingleton<ICryptoService>(new CryptoService(encryptionSettings));
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -135,6 +139,18 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    try
+    {
+        await SampleStudentSeeder.SeedAsync(app.Services, app.Logger);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Sample students were not added. Run the database scripts first.");
+    }
+}
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

@@ -346,27 +346,28 @@ BEGIN
 END $$
 
 -- STUDENTS
-
 DROP PROCEDURE IF EXISTS sp_Student_GetPaged $$
 CREATE PROCEDURE sp_Student_GetPaged(
-    IN p_Search    VARCHAR(100),
-    IN p_CountryId INT,
-    IN p_StateId   INT,
-    IN p_CityId    INT,
-    IN p_Page      INT,
-    IN p_PageSize  INT)
+    IN p_Search     VARCHAR(100),
+    IN p_SearchHash CHAR(64),
+    IN p_CountryId  INT,
+    IN p_StateId    INT,
+    IN p_CityId     INT,
+    IN p_Page       INT,
+    IN p_PageSize   INT)
 BEGIN
     DECLARE v_Offset  INT DEFAULT (p_Page - 1) * p_PageSize;
     DECLARE v_Pattern VARCHAR(102) DEFAULT CONCAT('%', p_Search, '%');
 
+    -- Names: partial match. Email/mobile: exact match on the fingerprint.
     SELECT COUNT(*) AS TotalCount
     FROM Students st
     WHERE (p_Search IS NULL
            OR st.FirstName LIKE v_Pattern
            OR st.LastName  LIKE v_Pattern
            OR CONCAT(st.FirstName, ' ', st.LastName) LIKE v_Pattern
-           OR st.Email     LIKE v_Pattern
-           OR st.Mobile    LIKE v_Pattern)
+           OR st.EmailHash  = p_SearchHash
+           OR st.MobileHash = p_SearchHash)
       AND (p_CountryId IS NULL OR st.CountryId = p_CountryId)
       AND (p_StateId   IS NULL OR st.StateId   = p_StateId)
       AND (p_CityId    IS NULL OR st.CityId    = p_CityId);
@@ -383,8 +384,8 @@ BEGIN
            OR st.FirstName LIKE v_Pattern
            OR st.LastName  LIKE v_Pattern
            OR CONCAT(st.FirstName, ' ', st.LastName) LIKE v_Pattern
-           OR st.Email     LIKE v_Pattern
-           OR st.Mobile    LIKE v_Pattern)
+           OR st.EmailHash  = p_SearchHash
+           OR st.MobileHash = p_SearchHash)
       AND (p_CountryId IS NULL OR st.CountryId = p_CountryId)
       AND (p_StateId   IS NULL OR st.StateId   = p_StateId)
       AND (p_CityId    IS NULL OR st.CityId    = p_CityId)
@@ -407,21 +408,21 @@ BEGIN
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Student_EmailExists $$
-CREATE PROCEDURE sp_Student_EmailExists(IN p_Email VARCHAR(254), IN p_ExcludeId INT)
+CREATE PROCEDURE sp_Student_EmailExists(IN p_EmailHash CHAR(64), IN p_ExcludeId INT)
 BEGIN
     SELECT EXISTS(
         SELECT 1 FROM Students
-        WHERE Email = p_Email
+        WHERE EmailHash = p_EmailHash
           AND (p_ExcludeId IS NULL OR StudentId <> p_ExcludeId)
     ) AS EmailExists;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Student_MobileExists $$
-CREATE PROCEDURE sp_Student_MobileExists(IN p_Mobile CHAR(10), IN p_ExcludeId INT)
+CREATE PROCEDURE sp_Student_MobileExists(IN p_MobileHash CHAR(64), IN p_ExcludeId INT)
 BEGIN
     SELECT EXISTS(
         SELECT 1 FROM Students
-        WHERE Mobile = p_Mobile
+        WHERE MobileHash = p_MobileHash
           AND (p_ExcludeId IS NULL OR StudentId <> p_ExcludeId)
     ) AS MobileExists;
 END $$
@@ -431,18 +432,20 @@ CREATE PROCEDURE sp_Student_Insert(
     IN p_FirstName   VARCHAR(50),
     IN p_LastName    VARCHAR(50),
     IN p_DateOfBirth DATE,
-    IN p_Email       VARCHAR(254),
-    IN p_Mobile      CHAR(10),
+    IN p_Email       VARCHAR(1400),
+    IN p_EmailHash   CHAR(64),
+    IN p_Mobile      VARCHAR(64),
+    IN p_MobileHash  CHAR(64),
     IN p_CountryId   INT,
     IN p_StateId     INT,
     IN p_CityId      INT,
     IN p_Address     VARCHAR(250))
 BEGIN
     INSERT INTO Students
-        (FirstName, LastName, DateOfBirth, Email, Mobile,
+        (FirstName, LastName, DateOfBirth, Email, EmailHash, Mobile, MobileHash,
          CountryId, StateId, CityId, Address)
     VALUES
-        (p_FirstName, p_LastName, p_DateOfBirth, p_Email, p_Mobile,
+        (p_FirstName, p_LastName, p_DateOfBirth, p_Email, p_EmailHash, p_Mobile, p_MobileHash,
          p_CountryId, p_StateId, p_CityId, p_Address);
 
     SELECT LAST_INSERT_ID() AS NewId;
@@ -454,8 +457,10 @@ CREATE PROCEDURE sp_Student_Update(
     IN p_FirstName   VARCHAR(50),
     IN p_LastName    VARCHAR(50),
     IN p_DateOfBirth DATE,
-    IN p_Email       VARCHAR(254),
-    IN p_Mobile      CHAR(10),
+    IN p_Email       VARCHAR(1400),
+    IN p_EmailHash   CHAR(64),
+    IN p_Mobile      VARCHAR(64),
+    IN p_MobileHash  CHAR(64),
     IN p_CountryId   INT,
     IN p_StateId     INT,
     IN p_CityId      INT,
@@ -466,7 +471,9 @@ BEGIN
         LastName    = p_LastName,
         DateOfBirth = p_DateOfBirth,
         Email       = p_Email,
+        EmailHash   = p_EmailHash,
         Mobile      = p_Mobile,
+        MobileHash  = p_MobileHash,
         CountryId   = p_CountryId,
         StateId     = p_StateId,
         CityId      = p_CityId,

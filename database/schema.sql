@@ -1,3 +1,6 @@
+-- Deletes the old database (DEVELOPMENT ONLY), then creates a fresh one
+DROP DATABASE IF EXISTS ismedu_db;
+
 CREATE DATABASE ismedu_db CHARACTER
 SET
     utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -55,8 +58,10 @@ CREATE TABLE
         FirstName VARCHAR(50) NOT NULL,
         LastName VARCHAR(50) NOT NULL,
         DateOfBirth DATE NOT NULL,
-        Email VARCHAR(254) NOT NULL,
-        Mobile CHAR(10) NOT NULL,
+        Email VARCHAR(1400) NOT NULL, 
+        EmailHash CHAR(64) NOT NULL,   
+        Mobile VARCHAR(64) NOT NULL,    
+        MobileHash CHAR(64) NOT NULL,   
         CountryId INT NOT NULL,
         StateId INT NOT NULL,
         CityId INT NOT NULL,
@@ -64,9 +69,8 @@ CREATE TABLE
         CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT PK_Students PRIMARY KEY (StudentId),
-        CONSTRAINT UQ_Students_Email UNIQUE (Email),
-        CONSTRAINT UQ_Students_Mobile UNIQUE (Mobile),
-        CONSTRAINT CK_Students_Mobile CHECK (Mobile REGEXP '^[6-9][0-9]{9}$'),
+        CONSTRAINT UQ_Students_EmailHash UNIQUE (EmailHash),
+        CONSTRAINT UQ_Students_MobileHash UNIQUE (MobileHash),
         CONSTRAINT FK_Students_Countries FOREIGN KEY (CountryId) REFERENCES Countries (CountryId) ON DELETE RESTRICT,
         CONSTRAINT FK_Students_States FOREIGN KEY (StateId) REFERENCES States (StateId) ON DELETE RESTRICT,
         CONSTRAINT FK_Students_Cities FOREIGN KEY (CityId) REFERENCES Cities (CityId) ON DELETE RESTRICT
