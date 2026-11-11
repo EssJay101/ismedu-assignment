@@ -18,6 +18,12 @@ The frontend is **Angular**, the backend is an **ASP.NET Core Web API**, and the
 - **Consistent errors** — every API error uses the same JSON shape, and the UI shows each message
   under the matching field
 - **Responsive** — works on phone, tablet and desktop
+- **Encrypted student contact details** — email and mobile are stored encrypted (AES-256-GCM)
+  in MySQL and decrypted by the API before they are shown. Duplicate checks and email/mobile
+  search use a keyed fingerprint (HMAC-SHA256), so search by email or mobile is **exact match**;
+  search by name is partial
+- **Stored procedures only** — every database operation (list, search, get by ID, insert,
+  update, delete, login) runs through a MySQL stored procedure; there is no SQL in the C# code
 
 
 ---
@@ -38,11 +44,14 @@ Install these first:
 
 ### 1. Database
 
-Run the two scripts **in this order**:
+Run the three scripts **in this order**:
 
 1. `database/schema.sql` — creates the `ismedu_db` database and its tables
 2. `database/procedures.sql` — creates the stored procedures the API uses for every database operation
-3. `database/seed.sql` — adds sample countries, states, cities, students and the login user
+3. `database/seed.sql` — adds sample countries, states, cities and the login user
+
+The 3 sample **students** are not in `seed.sql`. The API adds them automatically the first time it
+starts (in Development), because their email and mobile must be encrypted with your own key.
 
 
 ### 2. Backend (API)
@@ -71,7 +80,23 @@ Then save it:
 
 ```bash
 dotnet user-secrets set "Jwt:Key" "PASTE_THE_GENERATED_KEY_HERE"
+````
+
+**Encryption keys** — two **different** keys, each exactly 32 bytes. Run this PowerShell command **twice**
+(it prints a new key each time):
+
+```powershell
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 ```
+
+Then save one as each setting:
+
+```bash
+dotnet user-secrets set "Encryption:EncryptionKey" "PASTE_FIRST_KEY_HERE"
+dotnet user-secrets set "Encryption:HashKey" "PASTE_SECOND_KEY_HERE"
+```
+
+> Keep these keys safe. If the encryption key is lost or changed, stored emails and mobiles can no longer be read.
 
 **Run the API:**
 
